@@ -1,0 +1,85 @@
+<div class="row">
+  <div class="col-lg-6">
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        Bus Stops
+      </div>
+      <div class="panel-body">
+        <em>Use the box below to find your stop. Click on a stop to view the stop schedule.</em>
+        <form>
+          <div class="form-group">
+            <label for="searchText" class="sr-only">Search for a stop</label>
+            <input type="text" class="form-control" id="searchText" name="searchText" ng-model="searchText" placeholder="Type the name of your bus stop" />
+          </div>
+        </form>
+        <div class="list-group" ng-show="searchText.length > 3">
+          <a class="list-group-item" ng-class="{'active':stop.stop_id == currentStop}" href="javascript:void(0);" ng-click="loadStop(stop.stop_id);"
+            ng-repeat="stop in stops | orderBy: stop_desc | filter:searchText">
+            {{stop.stop_desc}}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="panel panel-success">
+      <div class="panel-heading">
+        Upcoming Departures
+      </div>
+      <div class="panel-body">
+        <p ng-show="liveDepartures.length == 0">
+          No upcoming departures
+        </p>
+        <table class="table table-striped table-bordered" ng-show="liveDepartures.length > 0">
+          <tr>
+            <th>
+              Route
+            </th>
+            <th>
+              Departure Time
+            </th>
+          </tr>
+          <tr ng-repeat="d in liveDepartures">
+            <td>
+              {{d.route.route_short_name}} {{d.trip.direction}} {{d.route.route_long_name}}
+            </td>
+            <td>
+              {{d.expected_mins}} minutes
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <div class="panel panel-warning">
+      <div class="panel-heading">
+        Stop Schedule
+      </div>
+      <div class="panel-body">
+        <table class="table table-striped table-bordered">
+          <tr>
+            <th>
+              Route
+            </th>
+            <th>
+              Arrival
+            </th>
+            <th>
+              Departure
+            </th>
+          </tr>
+          <tr ng-repeat="d in schedule">
+            <td>
+              {{getRouteName(d.trip.route_id,d.trip.direction)}}
+            </td>
+            <td>
+              {{d.arrival_time | mtdTime}}
+            </td>
+            <td>
+              {{d.departure_time | mtdTime}}
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
