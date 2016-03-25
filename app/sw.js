@@ -1,7 +1,7 @@
 /* Code borrowed from the offline first class */
 'use strict';
 //a
-var staticCacheName = 'mtd-static-v5';
+var staticCacheName = 'mtd-static-v7';
 var allCaches = [
   staticCacheName
 ];
@@ -29,7 +29,8 @@ self.addEventListener('install', function(event) {
         'scripts/controllers/about.js',
         'google_transit/routes.txt',
         'google_transit/stops.txt',
-        'sw.js'
+        'sw.js',
+        '/'
       ]);
     })
   );

@@ -13,7 +13,7 @@
           </div>
         </form>
         <div class="list-group" ng-show="searchText.length > 3">
-          <a class="list-group-item" ng-class="{'active':stop.stop_id == currentStop}" href="javascript:void(0);" ng-click="loadStop(stop.stop_id);"
+          <a class="list-group-item" ng-class="{'active':stop.stop_id == currentStop}" href="javascript:void(0);" ng-click="changeStop(stop.stop_id);"
             ng-repeat="stop in stops | orderBy: stop_desc | filter:searchText">
             {{stop.stop_desc}}
           </a>
