@@ -1,7 +1,9 @@
-/* Code borrowed from the offline first class */
+/*
+  Most of the code below was developed while taking the Offline First app.
+  Since it works, it's been copied from there and updated for this app.
+*/
 'use strict';
-//a
-var staticCacheName = 'mtd-static-v7';
+var staticCacheName = 'mtd-static-v17';
 var allCaches = [
   staticCacheName
 ];
@@ -61,4 +63,10 @@ self.addEventListener('fetch', function(event) {
     );
   }
 
+});
+
+self.addEventListener('message', function(event) {
+  if (event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
 });

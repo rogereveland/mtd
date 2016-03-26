@@ -12,12 +12,8 @@
  */
 angular.module('mtdApp')
   .controller('MainCtrl', function ($scope, $http, $interval, $q) {
-    $scope.awesomeThings = [
-      'HTML5 Boilerplate',
-      'AngularJS',
-      'Karma'
-    ];
 
+    //Setup our initial variables. Using a few variables as "flags" to control what gets displayed.
     $scope.routes = [];
     $scope.stops = [];
     $scope.liveDepartures = [];
@@ -28,15 +24,53 @@ angular.module('mtdApp')
     $scope.currentStop = "";
     $scope.dbPromise = "";
     $scope.loadFromFile = 0;
+    $scope.updateAlert = false;
+    $scope.worker = "";
 
+    //This will send a message to our service worker, letting it know the user wants to update
+    $scope.postMessage = function(){
+      $scope.worker.postMessage({action: 'skipWaiting'});
+      $scope.updateAlert = false;
+    };
+
+    /*
+      This gets called when a new version of the service worker is found, it shows an alert to the user
+      informing them that theres a new version. Have to wrap the updateAlert in $scope.$apply to get the
+      view to properly update
+    */
+    $scope.updateReady = function(worker){
+      $scope.$apply(function(){
+          $scope.updateAlert = true;
+      });
+      $scope.worker = worker;
+    };
+
+    /*
+      This gets called during the initialization of the service worker, it tracks any incoming updates
+      to the service worker
+    */
+    $scope.trackInstalling = function(worker){
+      worker.addEventListener('statechange', function() {
+        if (worker.state == 'installed') {
+          $scope.updateReady(worker);
+        }
+      });
+    };
+
+
+    /*
+      This function gets called once at startup and then when a user clicks on a stop.
+      It will update which stop is the current one and then load the functions to get schedules
+    */
     $scope.changeStop = function(stop_id){
         $scope.currentStop = stop_id;
         $scope.schedule = [];
         $scope.liveDepartures = [];
         $scope.loadStop();
         $scope.loadSchedule();
-    }
+    };
 
+    // This function gets the live data for the stop from the online API
     $scope.loadStop = function(){
       var url = $scope.baseURL.replace('apiMethod','GetDeparturesByStop');
       url += '&stop_id=' + $scope.currentStop;
@@ -46,6 +80,10 @@ angular.module('mtdApp')
       });
     };
 
+    /*
+      This function gets the static schedule of departure times from the database.
+      It then updates the database with the updated schedule for this stop.
+    */
     $scope.loadSchedule = function(){
       var url = $scope.baseURL.replace('apiMethod','GetStopTimesByStop');
       url += '&stop_id=' + $scope.currentStop;
@@ -83,6 +121,7 @@ angular.module('mtdApp')
 
     };
 
+    //Since the route name isn't kept with the stops and departures, we have to get it from our db of route names
     $scope.getRouteName = function(routeID, direction){
       for(var i=0; i<$scope.routes.length; i++){
         var route = $scope.routes[i];
@@ -93,13 +132,45 @@ angular.module('mtdApp')
       }
     };
 
+    /*
+      This function starts up the service worker and it's helper functions. This code was developed
+      in the Offline First course and reused here.
+    */
+
     $scope.startServiceWorker = function(){
       if (!navigator.serviceWorker) {
         return;
       }
       navigator.serviceWorker.register('/sw.js').then(function(reg) {
+        if (reg.waiting) {
+          $scope.updateReady(reg.waiting);
+          return;
+        }
+
+        if (reg.installing) {
+          $scope.trackInstalling(reg.installing);
+          return;
+        }
+
+        reg.addEventListener('updatefound', function() {
+          $scope.trackInstalling(reg.installing);
+        });
+
+        //Code taken from the Offline First course
+        var refreshing;
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+          if (refreshing) return;
+          window.location.reload();
+          refreshing = true;
+        });
+
       });
     };
+
+    /*
+      This function sets up the Database and returns a handle we can use in other functions
+      to access the database.
+    */
 
     $scope.openDB = function(){
       //Setup the database
@@ -132,7 +203,10 @@ angular.module('mtdApp')
       return dbPromise;
 
     };
-
+    /*
+      If the database is empty, or in the future we need to update it with content
+      this function will read the GTFS files and put them into the datbase.
+    */
     $scope.loadFiles = function(){
       var deferred = $q.defer();
       $http.get('/google_transit/routes.txt').then(function(res) {
@@ -182,6 +256,7 @@ angular.module('mtdApp')
       return deferred.promise;
     };
 
+    //This function gets the routes from the database.
     $scope.getRoutesFromDB = function(){
       var deferred = $q.defer();
       $scope.dbPromise.then(function(db) {
@@ -199,6 +274,7 @@ angular.module('mtdApp')
       return deferred.promise;
     };
 
+    //This function gets the stops from the database so we can use them in our stops search
     $scope.getStopsFromDB = function(){
       var deferred = $q.defer();
       $scope.dbPromise.then(function(db) {
@@ -215,68 +291,32 @@ angular.module('mtdApp')
       return deferred.promise;
     };
 
+    //The initialization function that sets up our app.
     $scope.init = function(){
+      //Start the service worker...
       $scope.startServiceWorker();
+      //Setup the database...
       $scope.dbPromise = $scope.openDB();
+      //Get the data into a usable state by first checking if we have routes in the DB...
       $scope.getRoutesFromDB().then(function(routes){
         if(routes.length == 0){
+          //if the db is empty we need to read the files and then load our variables.
           $scope.loadFiles().then(function(){
             return $scope.getRoutesFromDB();
           }).then(function(){
             return $scope.getStopsFromDB();
           });
         } else {
+            //if the db has data, load it!
             return $scope.getStopsFromDB();
         }
       }).then(function(){
+        //Then load up our initial bus stop and schedule and set it to check for departures every minute
         $scope.changeStop("PLAZA:1");
         $scope.loadSchedule();
+        
         //$interval($scope.loadStop,60000);
       });
-      //
-      /*
-      $scope.openDB().then(function(){
-        if($scope.loadFromFile == 1){
-          $scope.loadFiles()
-        } else {
-          return;
-        }
-
-      }).then(function(){
-        //return $scope.getRoutesFromDB();
-      });
-      */
-      /*
-      $scope.openDB().then(function(dbPromise){
-        $scope.dbPromise = dbPromise;
-        console.log(dbPromise);
-        if($scope.loadFromFile == 1){
-          return $scope.loadFiles();
-        } else {
-          return;
-        }
-      }).then(function(){
-        return $scope.getRoutesFromDB();
-      });
-      */
-      /*
-      console.log('im checking now');
-      console.log($scope.loadFromFile);
-      if($scope.loadFromFile == 1){
-        $scope.loadFiles();
-      }
-      */
-      /*
-      $scope.dbPromise.then(function(){
-        $scope.getRoutesFromDB().then(function(){
-          $scope.getStopsFromDB().then(function(){
-            $scope.changeStop("PLAZA:1");
-            $scope.loadSchedule();
-            $interval($scope.loadStop,60000);
-          });
-        });
-      });
-      */
     };
 
     $scope.init();

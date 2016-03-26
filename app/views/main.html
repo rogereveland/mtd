@@ -1,4 +1,13 @@
 <div class="row">
+  <div class="col-lg-12">
+    <div class="alert alert-success" ng-show="updateAlert == true">
+      A new version of this app is available. Click refresh to get the latest version
+      <button ng-click="postMessage()" class="btn btn-success">Refresh</button>
+      <button ng-click="updateAlert = false" class="btn btn-warning">Close</button>
+    </div>
+  </div>
+</div>
+<div class="row">
   <div class="col-lg-6">
     <div class="panel panel-primary">
       <div class="panel-heading">
@@ -48,6 +57,9 @@
             </td>
           </tr>
         </table>
+        <p>
+          <em>Departures are updated once per minute</em>
+        </p>
       </div>
     </div>
     <div class="panel panel-warning">
