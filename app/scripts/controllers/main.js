@@ -18,10 +18,13 @@ angular.module('mtdApp')
     $scope.stops = [];
     $scope.liveDepartures = [];
     $scope.schedule = [];
-    $scope.searchText = "Transit Plaza";
+    $scope.tripInfo = [];
+    $scope.searchTextDepart = "Transit Plaza";
+    $scope.searchTextArrive = "";
     $scope.apiKey = "352b4714e2ef4f7ba0f8b5f9f6267745";
     $scope.baseURL = 'https://developer.cumtd.com/api/v2.2/json/apiMethod?key='+$scope.apiKey;
-    $scope.currentStop = "";
+    $scope.currentDepartStop = "";
+    $scope.currentArriveStop = "";
     $scope.dbPromise = "";
     $scope.loadFromFile = 0;
     $scope.updateAlert = false;
@@ -51,7 +54,7 @@ angular.module('mtdApp')
     */
     $scope.trackInstalling = function(worker){
       worker.addEventListener('statechange', function() {
-        if (worker.state == 'installed') {
+        if (worker.state === 'installed') {
           $scope.updateReady(worker);
         }
       });
@@ -63,7 +66,7 @@ angular.module('mtdApp')
       It will update which stop is the current one and then load the functions to get schedules
     */
     $scope.changeStop = function(stop_id){
-        $scope.currentStop = stop_id;
+        $scope.currentDepartStop = stop_id;
         $scope.schedule = [];
         $scope.liveDepartures = [];
         $scope.loadStop();
@@ -73,7 +76,7 @@ angular.module('mtdApp')
     // This function gets the live data for the stop from the online API
     $scope.loadStop = function(){
       var url = $scope.baseURL.replace('apiMethod','GetDeparturesByStop');
-      url += '&stop_id=' + $scope.currentStop;
+      url += '&stop_id=' + $scope.currentDepartStop;
 
       $http.get(url).success(function(data){
         $scope.liveDepartures = data.departures;
@@ -86,14 +89,14 @@ angular.module('mtdApp')
     */
     $scope.loadSchedule = function(){
       var url = $scope.baseURL.replace('apiMethod','GetStopTimesByStop');
-      url += '&stop_id=' + $scope.currentStop;
+      url += '&stop_id=' + $scope.currentDepartStop;
 
       $scope.dbPromise.then(function(db){
         var tx = db.transaction('schedules', 'readwrite');
         var scheduleStore = tx.objectStore('schedules');
         var scheduleIndex = scheduleStore.index('stop_id');
 
-        return scheduleIndex.getAll($scope.currentStop);
+        return scheduleIndex.getAll($scope.currentDepartStop);
       }).then(function(schedules){
         if(schedules.length > 0){
           $scope.$apply(function(){
@@ -110,7 +113,7 @@ angular.module('mtdApp')
           var tx = db.transaction('schedules', 'readwrite');
           var scheduleStore = tx.objectStore('schedules');
           scheduleStore.put({
-            stop_id : $scope.currentStop,
+            stop_id : $scope.currentDepartStop,
             stop_times : data.stop_times
           });
         });
@@ -159,7 +162,7 @@ angular.module('mtdApp')
         //Code taken from the Offline First course
         var refreshing;
         navigator.serviceWorker.addEventListener('controllerchange', function() {
-          if (refreshing) return;
+          if (refreshing) {return;}
           window.location.reload();
           refreshing = true;
         });
@@ -290,6 +293,19 @@ angular.module('mtdApp')
       });
       return deferred.promise;
     };
+    //This is kind of a silly function, but if we don't use a function to set the stop, the view doesn't update properly.
+    $scope.setArrival = function(stop_id){
+      $scope.currentArriveStop = stop_id;
+    };
+
+    $scope.calculateRoute = function(){
+      var url = $scope.baseURL.replace('apiMethod','GetPlannedTripsByStops');
+      url += '&origin_stop_id=' + $scope.currentDepartStop;
+      url += '&destination_stop_id=' + $scope.currentArriveStop;
+      $http.get(url).then(function(res){
+        console.log(res.data);
+      });
+    };
 
     //The initialization function that sets up our app.
     $scope.init = function(){
@@ -299,7 +315,7 @@ angular.module('mtdApp')
       $scope.dbPromise = $scope.openDB();
       //Get the data into a usable state by first checking if we have routes in the DB...
       $scope.getRoutesFromDB().then(function(routes){
-        if(routes.length == 0){
+        if(routes.length === 0){
           //if the db is empty we need to read the files and then load our variables.
           $scope.loadFiles().then(function(){
             return $scope.getRoutesFromDB();
@@ -314,7 +330,7 @@ angular.module('mtdApp')
         //Then load up our initial bus stop and schedule and set it to check for departures every minute
         $scope.changeStop("PLAZA:1");
         $scope.loadSchedule();
-        
+
         //$interval($scope.loadStop,60000);
       });
     };

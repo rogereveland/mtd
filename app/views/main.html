@@ -15,18 +15,46 @@
       </div>
       <div class="panel-body">
         <em>Use the box below to find your stop. Click on a stop to view the stop schedule.</em>
+        <h4>
+          Departing Stop
+        </h4>
         <form>
           <div class="form-group">
-            <label for="searchText" class="sr-only">Search for a stop</label>
-            <input type="text" class="form-control" id="searchText" name="searchText" ng-model="searchText" placeholder="Type the name of your bus stop" />
+            <label for="searchTextDepart" class="sr-only">Search for a stop</label>
+            <input type="text" class="form-control" id="searchTextDepart" name="searchTextDepart" ng-model="searchTextDepart" placeholder="Type the name of your starting bus stop" />
           </div>
         </form>
-        <div class="list-group" ng-show="searchText.length > 3">
-          <a class="list-group-item" ng-class="{'active':stop.stop_id == currentStop}" href="javascript:void(0);" ng-click="changeStop(stop.stop_id);"
-            ng-repeat="stop in stops | orderBy: stop_desc | filter:searchText">
+        <div class="list-group" ng-show="searchTextDepart.length > 3">
+          <a class="list-group-item" ng-class="{'active':stop.stop_id == currentDepartStop}" href="javascript:void(0);" ng-click="changeStop(stop.stop_id);"
+            ng-repeat="stop in stops | orderBy: stop_desc | filter:searchTextDepart">
             {{stop.stop_desc}}
           </a>
         </div>
+        <hr />
+        <h4>
+          Arriving Stop
+        </h4>
+        <form>
+          <div class="form-group">
+            <label for="searchTextArrive" class="sr-only">Search for a stop</label>
+            <input type="text" class="form-control" id="searchTextArrive" name="searchTextArrive" ng-model="searchTextArrive" placeholder="Type the name of your destination bus stop" />
+          </div>
+        </form>
+        <div class="list-group" ng-show="searchTextArrive.length > 3">
+          <a class="list-group-item" ng-class="{'active':stop.stop_id == currentArriveStop}" href="javascript:void(0);" ng-click="setArrival(stop.stop_id);"
+            ng-repeat="stop in stops | orderBy: stop_desc | filter:searchTextArrive">
+            {{stop.stop_desc}}
+          </a>
+        </div>
+        <button class="btn btn-info" ng-show="currentArriveStop != ''" ng-click="calculateRoute();">Calculate Route</button>
+      </div>
+    </div>
+    <div class="panel panel-info">
+      <div class="panel-heading">
+        Route Information
+      </div>
+      <div class="panel-body">
+
       </div>
     </div>
   </div>

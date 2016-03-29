@@ -3,7 +3,7 @@
   Since it works, it's been copied from there and updated for this app.
 */
 'use strict';
-var staticCacheName = 'mtd-static-v17';
+var staticCacheName = 'mtd-static-v18.11';
 var allCaches = [
   staticCacheName
 ];
@@ -28,7 +28,6 @@ self.addEventListener('install', function(event) {
         'scripts/1idb.js',
         'scripts/app.js',
         'scripts/controllers/main.js',
-        'scripts/controllers/about.js',
         'google_transit/routes.txt',
         'google_transit/stops.txt',
         'sw.js',
