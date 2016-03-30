@@ -20,11 +20,11 @@ angular.module('mtdApp')
     $scope.schedule = [];
     $scope.tripInfo = [];
     $scope.searchTextDepart = "Transit Plaza";
-    $scope.searchTextArrive = "";
+    $scope.searchTextArrive = "Church & Elm (SE Corner)";
     $scope.apiKey = "352b4714e2ef4f7ba0f8b5f9f6267745";
     $scope.baseURL = 'https://developer.cumtd.com/api/v2.2/json/apiMethod?key='+$scope.apiKey;
     $scope.currentDepartStop = "";
-    $scope.currentArriveStop = "";
+    $scope.currentArriveStop = "CHCHELM:2";
     $scope.dbPromise = "";
     $scope.loadFromFile = 0;
     $scope.updateAlert = false;
@@ -294,16 +294,22 @@ angular.module('mtdApp')
       return deferred.promise;
     };
     //This is kind of a silly function, but if we don't use a function to set the stop, the view doesn't update properly.
-    $scope.setArrival = function(stop_id){
-      $scope.currentArriveStop = stop_id;
+    $scope.setArrival = function(stop){
+      $scope.currentArriveStop = stop.stop_id;
+      $scope.searchTextArrive = stop.stop_desc;
     };
 
+
+    //This function will fetch the trip information from the server and display it in the box.
     $scope.calculateRoute = function(){
+      $scope.tripInfo = [];
       var url = $scope.baseURL.replace('apiMethod','GetPlannedTripsByStops');
       url += '&origin_stop_id=' + $scope.currentDepartStop;
       url += '&destination_stop_id=' + $scope.currentArriveStop;
+      url += '&time=09:00';
       $http.get(url).then(function(res){
-        console.log(res.data);
+        $scope.tripInfo = res.data.itineraries;
+        console.log($scope.tripInfo)
       });
     };
 
@@ -330,6 +336,7 @@ angular.module('mtdApp')
         //Then load up our initial bus stop and schedule and set it to check for departures every minute
         $scope.changeStop("PLAZA:1");
         $scope.loadSchedule();
+        $scope.calculateRoute();
 
         //$interval($scope.loadStop,60000);
       });

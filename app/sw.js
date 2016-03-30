@@ -3,7 +3,7 @@
   Since it works, it's been copied from there and updated for this app.
 */
 'use strict';
-var staticCacheName = 'mtd-static-v18.11';
+var staticCacheName = 'mtd-static-v18.15';
 var allCaches = [
   staticCacheName
 ];

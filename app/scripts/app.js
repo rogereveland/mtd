@@ -54,4 +54,26 @@ angular
         }
         return theTime;
     };
-  });
+  })
+  .filter('routeTime', function(){
+    return function(input) {
+      var d = new Date(input);
+      console.log(d);
+      var hours = d.getHours();
+      var minutes = d.getMinutes();
+      var suffix = 'AM'
+      if(hours>12){
+        hours = Number(hours) - 12;
+        suffix = 'PM'
+      }
+      if(hours < 10){
+        hours = "0" + hours;
+      }
+      if(minutes < 10){
+        minutes = "0" + minutes;
+      }
+      var returnTime = hours + ":" + minutes + " " + suffix;
+      return returnTime;
+    };
+  })
+  ;
